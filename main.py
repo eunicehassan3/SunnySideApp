@@ -9,7 +9,7 @@ import json
 # UNITS = 'imperial'
 
 # url = f"https://api.tomorrow.io/v4/weather/
-    # forecast?location={LOCATION}&timesteps={TIMESTEPS}&units={UNITS}&apikey={KEY}"
+#     forecast?location={LOCATION}&timesteps={TIMESTEPS}&units={UNITS}&apikey={KEY}"
 
 # headers = {"accept": "application/json"}
 
@@ -21,13 +21,15 @@ import json
 
 
 def prompt():
-    location = input('Would you like to input a zip code or a city name? (Z/C) ')
+    location = input(
+        'Would you like to input a zip code or a city name? (Z/C) ')
     if location == 'Z':
         return readZip()
     elif location == 'C':
         return readCity()
     else:
-        print("Sorry, that didn't work, make sure you're inputting an appropriate string")
+        print("Sorry, that didn't work, "
+              "make sure you're inputting an appropriate string")
         return prompt()
 
 # temperatureMax
