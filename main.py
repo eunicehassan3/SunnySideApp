@@ -8,7 +8,8 @@ import json
 # TIMESTEPS = '1d'
 # UNITS = 'imperial'
 
-# url = f"https://api.tomorrow.io/v4/weather/forecast?location={LOCATION}&timesteps={TIMESTEPS}&units={UNITS}&apikey={KEY}"
+# url = f"https://api.tomorrow.io/v4/weather/
+    # forecast?location={LOCATION}&timesteps={TIMESTEPS}&units={UNITS}&apikey={KEY}"
 
 # headers = {"accept": "application/json"}
 
@@ -17,6 +18,7 @@ import json
 
 # formatted_response = json.dumps(response_data, indent=4)
 # print(formatted_response)
+
 
 def prompt():
     location = input('Would you like to input a zip code or a city name? (Z/C) ')
