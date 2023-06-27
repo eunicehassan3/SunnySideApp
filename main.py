@@ -17,6 +17,13 @@ response_data = json.loads(response.text)
 formatted_response = json.dumps(response_data, indent=4)
 print(formatted_response)
 
+def readCity():
+  while True:
+    city = input("Please enter the name of your city: ")
+    location = city
+    return location
+    break
+
 # temperatureMax
 # temperatureMin
 # UVIndex
