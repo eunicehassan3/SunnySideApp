@@ -2,7 +2,7 @@ import requests
 import os
 import json
 
-# KEY = os.environ.get('TOMORROW_KEY')\
+# KEY = os.environ.get('TOMORROW_KEY')
 # LOCATION = '60448 US'
 # TIMESTEPS = '1d'
 # UNITS = 'imperial'
@@ -40,12 +40,20 @@ def readCity():
 
 
 def readZip():
-    # Need to implement, takes in 'Z', returns formatted zip code
-    # having a return value to pass the styling
-    location = ""
-    return location
+    while True:
+        zip_code = input('Enter the zip code: ')
+        try:
+            zip_code = int(zip_code)
+            if zip_code > 0:
+                location = str(zip_code) + ' US'
+                return location
+                break
+            else:
+                print("Invalid zip code")
+        except ValueError:
+              print("Does nothing")
 
-
+            
 # temperatureMax
 # temperatureMin
 # UVIndex
