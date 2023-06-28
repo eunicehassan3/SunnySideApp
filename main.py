@@ -23,7 +23,7 @@ def readCity():
       city = input("Please enter the name of your city: ")
       location = urllib.parse.quote(city)
       return location
-      break
+
 
 # temperatureMax
 # temperatureMin
