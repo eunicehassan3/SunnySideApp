@@ -22,11 +22,10 @@ def prompt():
 
 
 def readCity():
-    # Need to implement, takes in 'C', returns formatted location,
-    # having a return value to pass the styling
-    location = ""
+    city = input("Please enter the name of your city: ")
+    location = urllib.parse.quote(city)
     return location
-
+    
 
 def readZip():
     while True:
