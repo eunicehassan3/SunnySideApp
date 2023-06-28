@@ -1,6 +1,7 @@
 import requests
 import os
 import json
+import urllib.parse
 
 KEY = os.environ.get('TOMORROW_KEY')
 LOCATION = '60448 US'
@@ -18,11 +19,10 @@ formatted_response = json.dumps(response_data, indent=4)
 print(formatted_response)
 
 def readCity():
-  while True:
-    city = input("Please enter the name of your city: ")
-    location = city
-    return location
-    break
+  city = input("Please enter the name of your city: ")
+  location = urllib.parse.quote(city)
+  return location
+  break
 
 # temperatureMax
 # temperatureMin
