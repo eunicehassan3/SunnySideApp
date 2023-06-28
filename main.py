@@ -2,8 +2,7 @@ import requests
 import os
 import json
 
-# KEY = os.environ.get('TOMORROW_KEY')
-# KEY = 'ao57EKrfioCgEyxOdx4g8g3nDvm1egGQ'
+# KEY = os.environ.get('TOMORROW_KEY')\
 # LOCATION = '60448 US'
 # TIMESTEPS = '1d'
 # UNITS = 'imperial'
@@ -24,13 +23,26 @@ def prompt():
     location = input(
         'Would you like to input a zip code or a city name? (Z/C) ')
     if location == 'Z':
-        return readZip()
+        return readZip(location)
     elif location == 'C':
-        return readCity()
+        return readCity(location)
     else:
         print("Sorry, that didn't work, "
               "make sure you're inputting an appropriate string")
         return prompt()
+
+
+def readCity(location):
+    # Need to implement, takes in 'C', returns formatted location,
+    # having a return value to pass the styling
+    return location
+
+
+def readZip(location):
+    # Need to implement, takes in 'Z', returns formatted zip code
+    # having a return value to pass the styling
+    return location
+
 
 # temperatureMax
 # temperatureMin
