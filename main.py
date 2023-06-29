@@ -8,9 +8,6 @@ import pandas as pd
 import sqlite3
 
 KEY = os.environ.get('TOMORROW_KEY')
-LOCATION = '60448 US'
-TIMESTEPS = '1d'
-UNITS = 'imperial'
 
 
 def prompt():
@@ -88,7 +85,6 @@ def chooseData():
 
 
 def command(location):
-    # asks user to input RW, NH, HF and NFD
     print('RW = Realtime Weather')
     print('HF = Hourly Forecast, next 24 hours')
     print('NFD = Next Five day Forecast')
@@ -113,10 +109,6 @@ def get_weather_condition(weather_code):
     return condition
 
 
-# Right now the weather in [location][name] is
-# [Weathercodetranslated], at a temperature of ["temperature"]
-# The UV index is at [uvIndex]
-# The wind speed is [windSpeed] MPH
 def realTime(location):
     url = (
         f"https://api.tomorrow.io/v4/weather/"
@@ -133,6 +125,7 @@ def realTime(location):
         "Right now the weather in", loc, "is",
         condition, "at a temperature of", temp, "F"
     )
+    print()
     cityToDb(response_data['location'])
 
 
@@ -147,20 +140,16 @@ def hourly(location):
     loc = response_data["location"]["name"]
     forecasts = response_data["timelines"]["hourly"]
     print("Hourly forecast in ", loc)
+    print()
     for forecast in forecasts[:24]:
-        # Format the time in a more legible way
-        time = forecast["time"]
-        time_utc = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
-        cst_offset = datetime.timedelta(hours=-5)
-        time_cst = time_utc + cst_offset
-        time_formatted = time_cst.strftime('%Y-%m-%d %H:%M:%S')
+        time = format_time(forecast["time"])
         vals = forecast["values"]
         temp = vals["temperature"]
         condition = get_weather_condition(vals["weatherCode"])
-        print(
-            "At", time_formatted, "it is",
-            condition, "at a temperature of", temp, "F"
-        )
+        print(time)
+        print("Temperature:", temp, "F")
+        print("It is expected to be", condition)
+        print()
     cityToDb(response_data['location'])
 
 
@@ -173,13 +162,21 @@ def nextFive(location):
     response = requests.get(url, headers=headers)
     response_data = json.loads(response.text)
     loc = response_data["location"]["name"]
+    print("Weekly Forecast for", loc)
+    print()
     forecasts = response_data["timelines"]["daily"]
     for days in forecasts:
         wkday = date_to_day(days["time"])
         avgTemp = days["values"]["temperatureAvg"]
         minTemp = days["values"]["temperatureMin"]
         maxTemp = days["values"]["temperatureMax"]
-        print(wkday)
+        condition = get_weather_condition(days["values"]["weatherCodeMax"])
+        print("Day:", wkday)
+        print("It is forecasted to be", condition)
+        print("Average Temperature:", avgTemp, "F")
+        print("The low for the day is:", minTemp, "F")
+        print("The high for the day is:", maxTemp, "F")
+        print()
     cityToDb(response_data['location'])
 
 
@@ -190,9 +187,14 @@ def date_to_day(date):
         return day_of_week
     except ValueError:
         return "Invalid date format. Please use YYYY-MM-DD."
-    # formatted_response = json.dumps(response_data, indent=4)
-    # print(formatted_response)
-    # print(response_data)
+
+
+def format_time(time):
+    time_utc = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
+    cst_offset = datetime.timedelta(hours=-5)
+    time_cst = time_utc + cst_offset
+    time_formatted = time_cst.strftime('%Y-%m-%d %H:%M:%S')
+    return time_formatted
 
 
 def cityToDb(locationData):
@@ -214,8 +216,10 @@ def cityToDb(locationData):
                     index=False
                 )
                 print("Location added successfully!")
+                print()
             else:
                 print("Location already exists in the table.")
+                print()
     # This will run if the DB doesnt exist yet
     except db.exc.OperationalError:
         with engine.connect() as connection:
@@ -226,25 +230,13 @@ def cityToDb(locationData):
                 index=False
             )
             print("Location added successfully!")
-            query_result = connection.execute(db.text(
-                "SELECT * FROM locationData;"
-            )).fetchall()
-            print(pd.DataFrame(query_result))
+            print()
 
 
-# def main():
-location = prompt()
-command(location)
-# hourly('60448 US')
-# realTime('63103 US')
-# formatted_response = json.dumps(response_data, indent=4)
-# print(formatted_response)
+def main():
+    location = prompt()
+    command(location)
 
-# temperatureMax
-# temperatureMin
-# UVIndex
-# Visibility
-# rainAccumulationAvg
-# windSpeedMax
-# WindSpeedMin
-# WindSpeedAvg
+
+if __name__ == "__main__":
+    main()
