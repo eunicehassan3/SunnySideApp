@@ -15,7 +15,10 @@ jobs:
       - name: Install tools
         run: |
           python -m pip install --upgrade pip pytest
-          pip install coverage                           
+          pip install coverage
+          pip3 install requests
+          pip3 install pandas
+          pip3 install SQLAlchemy                        
 
       - name: Test with unittest
         run: python3 -m unittest testfile.py

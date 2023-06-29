@@ -1,7 +1,5 @@
 import unittest
-from main import date_to_day
-from main import format_time
-from main import get_weather_condition
+from main import date_to_day, format_time, get_weather_condition
 
 
 class TestFileName(unittest.TestCase):
@@ -20,6 +18,7 @@ class TestFileName(unittest.TestCase):
     def test_get_weather_condition(self):
         result = get_weather_condition("1100")
         self.assertEqual(result, "Mostly Clear")
+
 
 if __name__ == '__main__':
     unittest.main()
