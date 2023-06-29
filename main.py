@@ -3,21 +3,30 @@ import os
 import json
 import urllib.parse
 import datetime
+import sqlalchemy as db
+import pandas as pd
+import sqlite3
 
-
-KEY = os.environ.get('TOMORROW_KEY')
+# KEY = os.environ.get('TOMORROW_KEY')
+KEY = 'ao57EKrfioCgEyxOdx4g8g3nDvm1egGQ'
 LOCATION = '60448 US'
 TIMESTEPS = '1d'
 UNITS = 'imperial'
 
 
 def prompt():
+
+    print('Z = Zip Code')
+    print('C = City Name')
+    print('S = Select Existing City from DataBase')
     location = input(
-        'Would you like to input a zip code or a city name? (Z/C) ')
+        'How would you like to get your weather information? ')
     if location == 'Z':
         return readZip()
     elif location == 'C':
         return readCity()
+    elif location == 'S':
+        return chooseData()
     else:
         print("Sorry, that didn't work, "
               "make sure you're inputting an appropriate string")
@@ -42,7 +51,41 @@ def readZip():
             else:
                 print("Invalid zip code")
         except ValueError:
-                print("Does nothing")
+            print("Does nothing")
+
+
+def chooseData():
+    engine = db.create_engine('sqlite:///cities.db')
+    try:
+        with engine.connect() as connection:
+            query_result = connection.execute(
+                db.text("SELECT * FROM locationData;")
+            ).fetchall()
+            stored_locations = pd.DataFrame(query_result)
+
+        stored_locations['name'] = stored_locations['name'].str.split(
+            ',', n=1
+        ).str[0]
+        print("Stored Locations:")
+        print(stored_locations)
+        selection = input(
+            "Enter the number of the location you want to choose: "
+        )
+        if selection.isdigit():
+            selection = int(selection)
+            if 0 <= selection < len(stored_locations):
+                location = stored_locations.loc[selection, 'name']
+                return location
+            else:
+                print("Invalid selection")
+        else:
+            print("Invalid input")
+
+        return chooseData()
+    # Catch statement for if the database doesnt exist
+    except db.exc.OperationalError:
+        print("Table does not yet exist, try entering data first")
+        return prompt()
 
 
 def command(location):
@@ -75,10 +118,10 @@ def get_weather_condition(weather_code):
 # [Weathercodetranslated], at a temperature of ["temperature"]
 # The UV index is at [uvIndex]
 # The wind speed is [windSpeed] MPH
-def realTime(l):
+def realTime(location):
     url = (
         f"https://api.tomorrow.io/v4/weather/"
-        f"realtime?location={l}&units=imperial&apikey={KEY}"
+        f"realtime?location={location}&units=imperial&apikey={KEY}"
     )
     headers = {"accept": "application/json"}
     response = requests.get(url, headers=headers)
@@ -91,12 +134,13 @@ def realTime(l):
         "Right now the weather in", loc, "is",
         condition, "at a temperature of", temp, "F"
     )
+    cityToDb(response_data['location'])
 
 
-def hourly(l):
+def hourly(location):
     url = (
-        f"https://api.tomorrow.io/v4/weather/"
-        f"forecast?location={l}&timesteps=1h&units=imperial&apikey={KEY}"
+        f"https://api.tomorrow.io/v4/weather/forecast"
+        f"?location={location}&timesteps=1h&units=imperial&apikey={KEY}"
     )
     headers = {"accept": "application/json"}
     response = requests.get(url, headers=headers)
@@ -118,12 +162,13 @@ def hourly(l):
             "At", time_formatted, "it is",
             condition, "at a temperature of", temp, "F"
         )
+    cityToDb(response_data['location'])
 
 
-def nextFive(l):
+def nextFive(location):
     url = (
-        f"https://api.tomorrow.io/v4/weather/"
-        f"forecast?location={l}&timesteps=1d&units=imperial&apikey={KEY}"
+        f"https://api.tomorrow.io/v4/weather/forecast?"
+        f"location={location}&timesteps=1d&units=imperial&apikey={KEY}"
     )
     headers = {"accept": "application/json"}
     response = requests.get(url, headers=headers)
@@ -136,6 +181,7 @@ def nextFive(l):
         minTemp = days["values"]["temperatureMin"]
         maxTemp = days["values"]["temperatureMax"]
         print(wkday)
+    cityToDb(response_data['location'])
 
 
 def date_to_day(date):
@@ -148,6 +194,43 @@ def date_to_day(date):
     # formatted_response = json.dumps(response_data, indent=4)
     # print(formatted_response)
     # print(response_data)
+
+
+def cityToDb(locationData):
+    df = pd.DataFrame.from_dict([locationData])
+    engine = db.create_engine('sqlite:///cities.db')
+    try:
+        with engine.connect() as connection:
+            query = db.text("SELECT * FROM locationData WHERE name=:name;")
+            existing_data = connection.execute(
+                query, {'name': locationData['name']}
+            ).fetchall()
+            # This means it wasn't found in the db
+            if len(existing_data) == 0:
+                # Insert new location
+                df.to_sql(
+                    'locationData',
+                    con=engine,
+                    if_exists='append',
+                    index=False
+                )
+                print("Location added successfully!")
+            else:
+                print("Location already exists in the table.")
+    # This will run if the DB doesnt exist yet
+    except db.exc.OperationalError:
+        with engine.connect() as connection:
+            df.to_sql(
+                'locationData',
+                con=engine,
+                if_exists='append',
+                index=False
+            )
+            print("Location added successfully!")
+            query_result = connection.execute(db.text(
+                "SELECT * FROM locationData;"
+            )).fetchall()
+            print(pd.DataFrame(query_result))
 
 
 # def main():
