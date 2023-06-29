@@ -3,7 +3,8 @@ import os
 import json
 import urllib.parse
 import datetime
-
+import sqlalchemy as db
+import pandas as pd
 
 KEY = os.environ.get('TOMORROW_KEY')
 LOCATION = '60448 US'
@@ -18,6 +19,8 @@ def prompt():
         return readZip()
     elif location == 'C':
         return readCity()
+    elif location == 'S':
+        return chooseData()
     else:
         print("Sorry, that didn't work, "
               "make sure you're inputting an appropriate string")
@@ -42,7 +45,34 @@ def readZip():
             else:
                 print("Invalid zip code")
         except ValueError:
-                print("Does nothing")
+            print("Does nothing")
+
+
+def chooseData():
+    engine = db.create_engine('sqlite:///cities.db')
+    with engine.connect() as connection:
+        query_result = connection.execute(
+            db.text("SELECT * FROM locationData;")
+        ).fetchall()
+        stored_locations = pd.DataFrame(query_result)
+
+    stored_locations['name'] = stored_locations['name'].str.split(
+        ',', n=1
+    ).str[0]
+    print("Stored Locations:")
+    print(stored_locations)
+    selection = input("Enter the number of the location you want to choose: ")
+    try:
+        selection = int(selection)
+        if 0 <= selection < len(stored_locations):
+            location = stored_locations.loc[selection, 'name']
+            return location
+        else:
+            print("Invalid selection")
+    except ValueError:
+        print("Invalid input")
+
+    return chooseData()
 
 
 def command(location):
@@ -75,7 +105,7 @@ def get_weather_condition(weather_code):
 # [Weathercodetranslated], at a temperature of ["temperature"]
 # The UV index is at [uvIndex]
 # The wind speed is [windSpeed] MPH
-def realTime(l):
+def realTime(location):
     url = (
         f"https://api.tomorrow.io/v4/weather/"
         f"realtime?location={l}&units=imperial&apikey={KEY}"
@@ -91,9 +121,10 @@ def realTime(l):
         "Right now the weather in", loc, "is",
         condition, "at a temperature of", temp, "F"
     )
+    cityToDb(response_data['location'])
 
 
-def hourly(l):
+def hourly(location):
     url = (
         f"https://api.tomorrow.io/v4/weather/"
         f"forecast?location={l}&timesteps=1h&units=imperial&apikey={KEY}"
@@ -118,9 +149,10 @@ def hourly(l):
             "At", time_formatted, "it is",
             condition, "at a temperature of", temp, "F"
         )
+    cityToDb(response_data['location'])
 
 
-def nextFive(l):
+def nextFive(location):
     url = (
         f"https://api.tomorrow.io/v4/weather/"
         f"forecast?location={l}&timesteps=1d&units=imperial&apikey={KEY}"
@@ -136,6 +168,7 @@ def nextFive(l):
         minTemp = days["values"]["temperatureMin"]
         maxTemp = days["values"]["temperatureMax"]
         print(wkday)
+    cityToDb(response_data['location'])
 
 
 def date_to_day(date):
@@ -148,6 +181,17 @@ def date_to_day(date):
     # formatted_response = json.dumps(response_data, indent=4)
     # print(formatted_response)
     # print(response_data)
+
+
+def cityToDb(locationData):
+    df = pd.DataFrame.from_dict([locationData])
+    engine = db.create_engine('sqlite:///cities.db')
+    df.to_sql('locationData', con=engine, if_exists='append', index=False)
+    with engine.connect() as connection:
+        query_result = connection.execute(db.text(
+            "SELECT * FROM locationData;"
+        )).fetchall()
+        print(pd.DataFrame(query_result))
 
 
 # def main():
