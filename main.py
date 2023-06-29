@@ -7,8 +7,7 @@ import sqlalchemy as db
 import pandas as pd
 import sqlite3
 
-# KEY = os.environ.get('TOMORROW_KEY')
-KEY = 'ao57EKrfioCgEyxOdx4g8g3nDvm1egGQ'
+KEY = os.environ.get('TOMORROW_KEY')
 LOCATION = '60448 US'
 TIMESTEPS = '1d'
 UNITS = 'imperial'
